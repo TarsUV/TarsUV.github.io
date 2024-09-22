@@ -3,27 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control PID</title>
+    <title>CoffeeGrind Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <div class="container">
-        <h1>Control PID</h1>
-        <div class="parameter">
-            <label for="kp">Kp:</label>
-            <input type="number" id="kp" step="0.1" value="2.0">
-        </div>
-        <div class="parameter">
-            <label for="ki">Ki:</label>
-            <input type="number" id="ki" step="0.1" value="5.0">
-        </div>
-        <div class="parameter">
-            <label for="kd">Kd:</label>
-            <input type="number" id="kd" step="0.1" value="1.0">
-        </div>
-        <button onclick="enviarParametros()">Actualizar Parámetros</button>
-        <div id="status">Desconectado</div>
-    </div>
-    <script src="script.js"></script>
+<body class="bg-cream-100 text-brown-900">
+    <div id="root"></div>
+    <script src="https://unpkg.com/react@17.0.2/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@4.1.17/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/lucide-react@0.303.0/dist/umd/lucide-react.min.js"></script>
+    <script src="script.js" type="text/babel"></script>
 </body>
 </html>
