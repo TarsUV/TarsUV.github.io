@@ -3,17 +3,1381 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoffeeGrind Pro</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <title>Control de Moledora de Café</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            background-color: rgba(0, 3, 34, 0.899); /* Fondo verde menta */
+            font-family: Arial, sans-serif;
+            margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Poppins', sans-serif;
+        }
+
+        .card {
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(236, 10, 10, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+        }
+        .card-header {
+    background-color: #007bff;
+    color: white;
+    border-radius: 10px 10px 0 0;
+    padding: 10px;
+    font-size: 1.2rem;
+}
+.card-body {
+    padding: 20px;
+}
+.card-bodyA {
+    background-color: #043972;
+    color: rgba(254, 254, 254, 0.936);
+    border-radius: 0px 0px 0 0;
+    padding: 15px;
+    font-size: 1.2rem;
+}
+
+.current-date-time {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    color: #333;
+}
+
+/* Animación de cambio de fondo para el temporizador */
+.timer.active {
+    background-color: #ffc107;
+}
+
+.timer.completed {
+    background-color: #28a745;
+}
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .active {
+            background-color: #a78e28;
+        }
+
+        .inactive {
+            background-color: #dc3545;
+        }
+        #dataContainer {
+            padding: 20px;
+        }
+        .weight-comparison {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .grind-control {
+            text-align: center;
+            margin: 20px 0;
+        }
+        #debugConsole {
+            height: 200px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .debug-message {
+            margin: 2px 0;
+            padding: 2px 5px;
+        }
+        .debug-sent {
+            color: #0066cc;
+        }
+        .debug-received {
+            color: #006600;
+        }
+        .connection-status {
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .grind-level-selector {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .timer-display {
+            font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+    background-color: #10a0b3;
+    border-radius: 10px;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+        }
+        .timer {
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+    background-color: "";
+    border-radius: 10px;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+}
+        .weight-input {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .servo-control {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #c88b19;
+            border-radius: 8px;
+        }
+        .motor-control {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        #checkbox {
+  display: none;
+}
+
+.switch {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  background-color: rgb(99, 99, 99);
+  border-radius: 50%;
+  z-index: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgb(126, 126, 126);
+  box-shadow: 0px 0px 3px rgb(2, 2, 2) inset;
+  transition: 0.5s;
+}
+.switch svg {
+  width: 1.2em;
+}
+.switch svg path {
+  fill: rgb(48, 48, 48);
+}
+
+/* Pantalla de bienvenida */
+#welcome-screen {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-image: url('https://images3.alphacoders.com/220/220047.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-align: center;
+            position: relative;
+        }
+
+        #welcome-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        #welcome-screen > * {
+            position: relative;
+            z-index: 2;
+        }
+
+/* Botón de iniciar */
+buttonINICIAR {
+  padding: 1em 2em;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: #2c9caf;
+  transition: all 1000ms;
+  font-size: 15px;
+  position: relative;
+  overflow: hidden;
+  outline: 2px solid #2c9caf;
+}
+
+buttonINICIAR:hover {
+  color: #ffffff;
+  transform: scale(1.1);
+  outline: 2px solid #70bdca;
+  box-shadow: 4px 5px 17px -4px #268391;
+}
+
+buttonINICIAR::before {
+  content: "";
+  position: absolute;
+  left: -50px;
+  top: 0;
+  width: 0;
+  height: 100%;
+  background-color: #2c9caf;
+  transform: skewX(45deg);
+  z-index: -1;
+  transition: width 1000ms;
+}
+
+buttonINICIAR:hover::before {
+  width: 250%;
+}
+/* Pantalla de control */
+#control-screen {
+    margin-top: 30px;
+}
+
+#control-screen h2 {
+    font-size: 2em;
+}
+
+#control-screen select {
+    padding: 10px;
+    font-size: 1em;
+    margin: 10px;
+}
+
+#control-screen button {
+    padding: 10px 20px;
+    font-size: 1.2em;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#control-screen button:hover {
+    background-color: #218838;
+}
+#checkbox:checked + .switch {
+  box-shadow:
+    0px 0px 1px rgb(151, 243, 255) inset,
+    0px 0px 2px rgb(151, 243, 255) inset,
+    0px 0px 10px rgb(151, 243, 255) inset,
+    0px 0px 40px rgb(151, 243, 255),
+    0px 0px 100px rgb(151, 243, 255),
+    0px 0px 5px rgb(151, 243, 255);
+  border: 2px solid rgb(255, 255, 255);
+  background-color: rgb(146, 180, 184);
+}
+#checkbox:checked + .switch svg {
+  filter: drop-shadow(0px 0px 5px rgb(151, 243, 255));
+}
+#checkbox:checked + .switch svg path {
+  fill: rgb(255, 255, 255);
+}
+#checkbox:active + .switch {
+  transform: translate(0em, 0.1em);
+  box-shadow:
+    0px 0px 0.1px rgb(151, 243, 255) inset,
+    0px 0px 0.2px rgb(151, 243, 255) inset,
+    0px 0px 1px rgb(151, 243, 255) inset,
+    0px 0px 10px rgb(151, 243, 255),
+    0px 0px 50px rgb(151, 243, 255);
+  border: 2px solid rgb(255, 255, 255);
+  background-color: rgb(146, 180, 184);
+}
+#checkbox:active + .switch svg path {
+  box-shadow: 0.2em 0.2em 0.3em rgba(0, 0, 0, 0.3);
+  transform: translate(0em, 0.1em);
+}
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+ /* Estilos del botón HOME */
+ buttonHOME {
+            appearance: none;
+            background-color: transparent;
+            border: 0.125em solid #1A1A1A;
+            border-radius: 0.9375em;
+            box-sizing: border-box;
+            color: #3B3B3B;
+            cursor: pointer;
+            display: inline-block;
+            font-family: Robert,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+            font-size: 16px;
+            font-weight: 600;
+            line-height: normal;
+            margin: 0;
+            min-height: 3.75em;
+            min-width: 0;
+            outline: none;
+            padding: 1em 2.3em;
+            text-align: center;
+            text-decoration: none;
+            transition: all 300ms cubic-bezier(.23, 1, 0.32, 1);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            will-change: transform;
+        }
+
+        buttonHOME:disabled {
+            pointer-events: none;
+        }
+
+        buttonHOME:hover {
+            color: #fff;
+            background-color: #1A1A1A;
+            box-shadow: rgba(0, 0, 0, 0.25) 0 8px 15px;
+            transform: translateY(-2px);
+        }
+
+        buttonHOME:active {
+            box-shadow: none;
+            transform: translateY(0);
+        }
+
+        h8 {
+            font-size: 4vw;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        p {
+            font-size: 1.5vw;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+/* Variables */
+:root {
+    --primary-color: #3b82f6;
+    --primary-hover: #2563eb;
+    --secondary-color: #22c55e;
+    --secondary-hover: #16a34a;
+    --background: #f3f4f6;
+    --text-color: #1f2937;
+    --error-color: #ef4444;
+    --success-color: #22c55e;
+}
+
+/* Reset y estilos base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Contenedor principal */
+.container {
+    width: 100%;
+    max-width: 400px;
+    padding: 1rem;
+}
+
+/* Estilos del formulario */
+.form-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.avatar {
+    width: 64px;
+    height: 64px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    padding: 1rem;
+    margin: 0 auto;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    filter: invert(1);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.input-group {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.25rem;
+    height: 1.25rem;
+    opacity: 0.5;
+}
+
+input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Botones */
+.btn {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    margin-bottom: 1rem;
+}
+
+.btn-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    filter: invert(1);
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+.btn-secondary {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: var(--secondary-hover);
+}
+
+/* Enlaces */
+.form-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.forgot-password {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.forgot-password:hover {
+    color: var(--primary-hover);
+}
+
+/* Utilidades */
+.hidden {
+    display: none;
+}
+/* Para centrar el login y registro */
+#login-screen, #register-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Altura de la pantalla completa */
+}
+
+.bg-white {
+    width: 100%;
+    max-width: 400px; /* Ajusta el ancho del formulario */
+    margin: auto; /* Centrado horizontal */
+}
+
+
+.neon-buttonG {
+  position: relative;
+  padding: 0.75em 1.5em;
+  border-radius: 0.625em;
+  border: 2px solid #00ffff;
+  font-size: 0.938em;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.125em;
+  background: transparent;
+  color: #00ffff;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 0 0 0 transparent;
+  transition: all 0.3s ease-in-out;
+}
+
+.neon-buttonG:hover {
+  background: rgba(0, 255, 255, 0.1);
+  box-shadow: 0 0 40px 10px rgba(0, 255, 255, 0.5);
+  color: #ffffff;
+}
+
+.neon-buttonG::before {
+  content: "";
+  display: block;
+  width: 0px;
+  height: 86%;
+  position: absolute;
+  top: 7%;
+  left: 0%;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, #00ffff, transparent);
+  box-shadow: 0 0 50px 30px #00ffff;
+  transform: skewX(-20deg);
+  transition: all 0.5s ease-in-out;
+}
+
+.neon-buttonG:hover::before {
+  animation: neon-shine 0.6s 0s linear;
+}
+
+@keyframes neon-shine {
+  from {
+    opacity: 0;
+    left: 0%;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    left: 100%;
+  }
+}
+
+.neon-buttonG:active {
+  transform: scale(0.95);
+  box-shadow: 0 0 0 0 transparent;
+  transition: all 0.2s ease-in;
+}
+
+.btnH {
+  color: purple;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 2px solid purple;
+  padding: 10px 20px;
+  font-size: 17px;
+  cursor: pointer;
+  font-weight: bold;
+  background: transparent;
+  position: relative;
+  transition: all 1s;
+  overflow: hidden;
+}
+
+.btnH:hover {
+  color: white;
+}
+
+.btnH::before {
+    content: "";
+    position: absolute;
+    height: 100%;
+    width: 2%;
+    top: 0px;
+    left: 0px;
+    transform: skewX(0deg);
+    background-color: purple;
+    z-index: -12;
+    transition: all 1s;
+}
+
+.btnH:hover::before {
+    width: 100%;
+}
+.custom-btn-hover:hover {
+    background-color: #0cd6d6;
+    color: #004173;
+    border-color: #0cd6d6;
+}
+.sliderG {
+ -webkit-appearance: none;
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+  background-color: #4158D0;
+  background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.sliderG::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #4c00ff;
+  background-image: linear-gradient(160deg, #4900f5 0%, #80D0C7 100%);
+  cursor: pointer;
+}
+
+.sliderG::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #0093E9;
+  background-image: linear-gradient(160deg, #0093E9 0%, #80D0C7 100%);
+  cursor: pointer;
+}
+
+
+    </style>
 </head>
-<body class="bg-cream-100 text-brown-900">
-    <div id="root"></div>
-    <script src="https://unpkg.com/react@17.0.2/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
-    <script src="https://unpkg.com/framer-motion@4.1.17/dist/framer-motion.js"></script>
-    <script src="https://unpkg.com/lucide-react@0.303.0/dist/umd/lucide-react.min.js"></script>
-    <script src="script.js" type="text/babel"></script>
+<body>
+    <!-- Contenedor de la pantalla de bienvenida -->
+    <div id="welcome-screen">
+        <h8>TARS</h8>
+        <p>Una nueva Experiencia de Molienda</p>
+        <p><strong>Univalle 2024</strong></p>
+        <buttonINICIAR id="buttonINICIAR">Iniciar</buttonINICIARs>             
+    </div>
+
+    <!-- Pantalla de login -->
+    <div id="login-screen" style="display: none;" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <!-- Formulario de Login -->
+            <form id="loginForm" class="space-y-6">
+                <div class="text-center mb-8">
+                    <div class="bg-blue-500 w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4">
+                        <img src="https://api.iconify.design/lucide:coffee.svg" alt="TARS" class="w-8 h-8 text-white" style="filter: invert(1);">
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900">Iniciar Sesión</h2>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Usuario</label>
+                    <input type="text" id="loginUsername" required 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+                    <input type="password" id="loginPassword" required 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <button type="submit" 
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Iniciar Sesión
+                </button>
+
+                <div class="text-center">
+                    <a href="#" id="showRegister" class="text-sm text-blue-600 hover:text-blue-500">
+                        ¿No tienes cuenta? Regístrate
+                    </a>
+                </div>
+            </form>
+
+            <!-- Formulario de Registro -->
+            <form id="registerForm" class="space-y-6" style="display: none;">
+                <div class="text-center mb-8">
+                    <div class="bg-green-500 w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4">
+                        <img src="https://api.iconify.design/lucide:user-plus.svg" alt="Registro" class="w-8 h-8 text-white" style="filter: invert(1);">
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900">Registro</h2>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Usuario</label>
+                    <input type="text" id="regUsername" required 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="regEmail" required 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+                    <input type="password" id="regPassword" required 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <button type="submit" 
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Registrarse
+                </button>
+
+                <div class="text-center">
+                    <a href="#" id="showLogin" class="text-sm text-blue-600 hover:text-blue-500">
+                        ¿Ya tienes cuenta? Inicia sesión
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+        <!-- Contenedor de la pantalla de control (inicialmente oculto) -->
+        <div id="control-screen" style="display: none;">
+    <!-- Sección de introducción (Hero) -->
+
+    <section class="bg-gray-900 text-white">
+    <div class="mx-auto max-w-screen-xl px-4 py-32 lg:flex lg:h-screen lg:items-center">
+        <div class="mx-auto max-w-3xl text-center">
+            <h1 class="bg-gradient-to-r from-green-300 via-blue-500 to-purple-600 bg-clip-text text-3xl font-extrabold text-transparent sm:text-5xl">
+                Control de Moledora de Café
+                <span class="sm:block">Experiencia de Molienda Perfecta</span>
+            </h1>
+            <p class="mx-auto mt-4 max-w-xl sm:text-xl/relaxed">
+                Bienvenido a nuestra plataforma de control avanzado para moledoras de café. Optimiza tu experiencia de molienda con precisión y facilidad.
+            </p>
+            <p class="mx-auto mt-2 max-w-xl sm:text-xl/relaxed">
+                Abner Andres Chapuel__Miguel Angel Londoño__Univalle 2024       
+            </p>
+            
+            
+</section>
+
+    <div class="container mt-5" id="panel-control">
+        <!-- Card para mostrar fecha y hora actuales -->    
+        <div class="card">
+        <div class="card-header" style="background-color: #0cd6d6; color: #004173;">
+            <h5 class="card-title">Fecha y Hora</h5>
+        </div>
+        <div class="card-body">
+            <p id="fechaHoraActual" class="current-date-time">Cargando...</p>
+        </div>
+    </div>
+        <!-- Card principal -->
+        <div class="card mb-3">
+            <div class="card-header" style="background-color: #0cd6d6; color: #004173;">
+                <h1>Control Moledora de Café</h1>
+            </div>
+            <div class="card-body">
+                <btnH id="btnConnect" class="btnH">Conectar a Servidor</btnH>
+                <p class="mt-2">Estado: <span id="connectionStatus">Desconectado</span></p>
+                <div id="fechaHoraActual"></div>
+            </div>
+        </div>
+
+        <!-- Card de peso -->
+        <div class="card mb-3">
+            <div class="card-header" style="background-color: #0cd6d6; color: #004173;">Peso</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Peso de Entrada</h5>
+                        <p id="peso-entrada">-- g</p>
+                        <div class="status-indicator" id="sensor-peso-entrada-status"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Peso de Salida</h5>
+                        <p id="peso-salida">-- g</p>
+                        <div class="status-indicator" id="sensor-peso-salida-status"></div>
+                    </div>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar" id="peso-diferencia" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                </div>
+                <p id="peso-diferencia-texto">Diferencia: -- g</p>
+            </div>
+        </div>
+
+        <!-- Card de peso a moler -->
+        <div class="card mb-3">
+            <div class="card-header" style="background-color: #0cd6d6; color: #004173;" class="text-white">Peso a Moler</div>
+            <div class="card-body">
+                <h4>Peso a Moler</h4>
+                <div class="input-group mb-3">
+                    <input type="number" id="pesoAMoler" class="form-control" placeholder="Ingrese el peso a moler (g)" min="0">
+                    <btnH class="btnH" type="button" id="btnSetPesoAMoler">Establecer</btnH>
+                </div>
+                <btnH class="btnH" id="btnActivarDispensador">Activar Dispensador</btnH>
+                <p id="pesoAMolerStatus"></p>
+            </div>
+        </div>
+
+<!-- Card de nivel de molienda -->
+<div class="card mb-3">
+    <div class="card-header" style="background-color: #0cd6d6; color: #004173;">Nivel de Molienda</div>
+    <div class="card-bodyA">
+        <h4>Nivel de Molienda</h4>
+        
+        <div class="btn-group" role="group" style="display: flex; gap: 10px; justify-content: center;">
+            <input type="radio" class="btn-check" name="grindLevel" id="levelFino" value="fino" checked>
+            <label class="neon-buttonG" for="levelFino" style="cursor: pointer; padding: 10px 20px;">
+                Fino (17s)
+            </label>
+    
+            <input type="radio" class="btn-check" name="grindLevel" id="levelMedio" value="medio">
+            <label class="neon-buttonG" for="levelMedio" style="cursor: pointer; padding: 10px 20px;">
+                Medio (12s)
+            </label>
+    
+            <input type="radio" class="btn-check" name="grindLevel" id="levelGrueso" value="grueso">
+            <label class="neon-buttonG" for="levelGrueso" style="cursor: pointer; padding: 10px 20px;">
+                Grueso (9s)
+            </label>
+        </div>
+        <p><strong>Tiempo restante:</strong></p>
+        <div id="timerDisplay" class="timer">00:00</div>
+    </div>
+</div>
+
+        <!-- Card de control del motor AC -->
+        <div class="card mb-3">
+            <div class="card-header" style="background-color: #0cd6d6; color: #004173;">Control del Motor AC</div>
+            <div class="card-bodyA">
+                <h5>Potencia del Motor: <span id="motorPowerValue">100%</span></h5>
+                <input type="range" class="sliderG" id="motorPower" min="0" max="100" value="100">
+                <p>Cruces por cero: <span id="crucesCero">0</span></p>
+            </div>
+        </div>
+
+        <!-- Card de control de molienda -->
+        <div class="card mb-3">
+            <div class="card-header" style="background-color: #0cd6d6; color: #004173;">Control de Molienda</div>
+            <div class="card-bodyA">
+                <h5>Estado actual: <span id="estado-molienda">Detenido</span></h5>
+                <br>
+                <div class="btn-group" role="group">
+                    <input id="checkbox" type="checkbox" />
+                    <label class="switch" for="checkbox">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="slider">
+                        <path d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32V256c0 17.7 14.3 32 32 32s32-14.3 32-32V32zM143.5 120.6c13.6-11.3 15.4-31.5 4.1-45.1s-31.5-15.4-45.1-4.1C49.7 115.4 16 181.8 16 256c0 132.5 107.5 240 240 240s240-107.5 240-240c0-74.2-33.8-140.6-86.6-184.6c-13.6-11.3-33.8-9.4-45.1 4.1s-9.4 33.8 4.1 45.1c38.9 32.3 63.5 81 63.5 135.4c0 97.2-78.8 176-176 176s-176-78.8-176-176c0-54.4 24.7-103.1 63.5-135.4z"></path>
+                        </svg>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de control del servo -->
+        <div class="card mb-3">
+            <div class="card-header" style="background-color: #0cd6d6; color: #004173;">Control del Servo</div>
+            <div class="card-bodyA">
+                <h5>Servomotor: <span id="servo-estado">Detenido</span></h5>
+                <div class="mb-3">
+                    <label for="servoSpeed" class="form-label">Velocidad (-100 a 100)</label>
+                    <input type="range" class="form-range" id="servoSpeed" min="-100" max="100" value="0">
+                    <span id="servoSpeedValue">0</span>
+                </div>
+                <div class="btn-group" role="group">
+                    <neon-buttonG id="btnServoHorario" class="neon-buttonG me-3">Girar Horario</neon-buttonG>
+                    <neon-buttonG  id="btnServoAntihorario" class="neon-buttonG me-3">Girar Antihorario</neon-buttonG>
+                    <neon-buttonG  id="btnServoDetener" class="neon-buttonG">Detener</neon-buttonG>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de estado y depuración -->
+        <div class="card mb-3">
+            <div class="card-header" style="background-color: #0cd6d6; color: #004173;">Estado y Depuración</div>
+            <div class="card-bodyA">
+                <h5>Estado del sistema:</h5>
+                <ul id="systemStatus"></ul>
+                
+                <h5 class="mt-3">Consola de depuración:</h5>
+                <div id="debugConsole" class="overflow-auto" style="height: 220px;"></div>
+                <br>
+                <neon-buttonG class="neon-buttonG" onclick="clearDebug()">Limpiar consola</neon-buttonG>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+                <div id="control-screen bg-purple-500 text-white">
+                    <h2>Control de Molienda</h2>
+                <p>Información de control aquí...</p>
+                    <!-- Botón para volver a la pantalla de bienvenida -->
+                    <buttonHOME id="buttonHome">Volver a la Bienvenida</buttonHOME>
+                </div>
+                <!-- Sección Sobre Nosotros -->
+                <div id="sobre-nosotros" class="bg-white py-3">
+                <div class="container" style="padding: 0 15px;">
+                    <h2 class="text-2xl font-bold mb-4" style="text-align: center;">
+                        Sobre Nuestro Sistema de Control
+                    </h2>
+                    <p style="text-align: justify; line-height: 1.8; margin: 0;">
+                        Nuestro sistema de control de moledora de café está diseñado para ofrecer una experiencia de molienda precisa y eficiente. 
+                        Utilizando tecnología de punta, permitimos a los usuarios monitorear y controlar todos los aspectos del proceso de molienda en tiempo real.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+</div>
+
+
+        <script src="js/users.js"></script>
+        <script src="js/auth.js"></script>
+        <script src="js/main.js"></script>
+
+    <script>
+        
+        document.addEventListener("DOMContentLoaded", function() {
+    const btnIniciar = document.getElementById('buttonINICIAR');
+    const buttonHome = document.getElementById('buttonHome');
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const controlScreen = document.getElementById('control-screen');
+    const loginScreen = document.getElementById('login-screen');
+
+    // Recuperar usuarios del localStorage o usar el inicial si no hay datos
+    let users = JSON.parse(localStorage.getItem('users')) || {
+        admin: 'password' // Usuario inicial
+    };
+
+    // Elementos del formulario de login y registro
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const loginError = document.createElement('div');
+    loginError.style.color = 'red';
+    loginError.id = 'loginError';
+    loginForm.prepend(loginError);
+
+    const registerError = document.createElement('div');
+    registerError.style.color = 'red';
+    registerError.id = 'registerError';
+    registerForm.prepend(registerError);
+
+    // Función para guardar usuarios en localStorage
+    function saveUsers() {
+        localStorage.setItem('users', JSON.stringify(users));
+    }
+
+    // Agregar el evento al botón "Iniciar"
+    btnIniciar.addEventListener('click', function() {
+        welcomeScreen.style.display = 'none';
+        loginScreen.style.display = 'block';
+    });
+
+    // Manejo del login
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
+
+        if (users[username] === password) {
+            loginError.textContent = '';
+            loginScreen.style.display = 'none';
+            controlScreen.style.display = 'block';
+            localStorage.setItem('currentUser', username); // Guardar sesión actual
+        } else {
+            loginError.textContent = 'Credenciales incorrectas. Por favor, intente de nuevo.';
+        }
+    });
+
+    // Manejo del registro
+    registerForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const regUsername = document.getElementById('regUsername').value;
+        const regPassword = document.getElementById('regPassword').value;
+
+        if (!users[regUsername]) {
+            users[regUsername] = regPassword;
+            saveUsers(); // Guardar usuarios actualizados
+            registerError.textContent = '';
+            alert('Registro exitoso. Ahora puedes iniciar sesión.');
+            document.getElementById('showLogin').click();
+        } else {
+            registerError.textContent = 'El usuario ya existe. Por favor, elige otro nombre de usuario.';
+        }
+    });
+
+    // Alternar entre login y registro
+    document.getElementById('showRegister').addEventListener('click', function() {
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'block';
+    });
+
+    document.getElementById('showLogin').addEventListener('click', function() {
+        registerForm.style.display = 'none';
+        loginForm.style.display = 'block';
+    });
+
+    // Botón "Home" para volver a la pantalla inicial y cerrar sesión
+    buttonHome.addEventListener('click', function() {
+        controlScreen.style.display = 'none';
+        loginScreen.style.display = 'none';
+        welcomeScreen.style.display = 'flex';
+        localStorage.removeItem('currentUser'); // Cerrar sesión
+    });
+
+    // Verificar si hay una sesión activa al cargar la página
+    const currentUser = localStorage.getItem('currentUser');
+    if (currentUser) {
+        welcomeScreen.style.display = 'none';
+        loginScreen.style.display = 'none';
+        controlScreen.style.display = 'block';
+    }
+});
+
+        var socket = io();
+        var moliendaActiva = false;
+        var tiempoRestante = 0;
+        var timerInterval = null;
+        var pesoEntradaActual = 0;
+
+        const TIEMPOS_MOLIENDA = {
+            'fino': 17,
+            'medio': 12,
+            'grueso': 9
+        };
+
+        socket.on('connect', function() {
+            console.log('Conectado al servidor');
+            document.getElementById('connectionStatus').textContent = 'Conectado';
+            document.getElementById('connectionStatus').style.color = '#28a745';
+            document.getElementById('btnConnect').textContent = 'Reconectar';
+        });
+
+        socket.on('disconnect', function() {
+            console.log('Desconectado del servidor');
+            document.getElementById('connectionStatus').textContent = 'Desconectado';
+            document.getElementById('connectionStatus').style.color = '#dc3545';
+            document.getElementById('btnConnect').textContent = 'Conectar a Servidor';
+        });
+    socket.on('reconnect', function() {
+        console.log('Reconectado al servidor');
+        document.getElementById('connectionStatus').textContent = 'Reconectado';
+        document.getElementById('connectionStatus').style.color = '#28a745';
+    });
+    socket.on('datos', function(data) {
+    console.log('Datos recibidos:', data);
+    actualizarInterfaz(data);
+    updateSystemStatus(data); // Actualizar el estado del sistema
+});
+socket.on('reconnect_error', (error) => {
+    console.error('Reconnection error:', error);
+    document.getElementById('connectionStatus').textContent = 'Error de reconexión';
+    document.getElementById('connectionStatus').style.color = '#dc3545';
+});
+
+        function actualizarInterfaz(data) {
+            document.getElementById('peso-entrada').innerHTML = data.peso_entrada.toFixed(1) + ' g';
+            document.getElementById('peso-salida').innerHTML = data.peso_salida.toFixed(1) + ' g';
+            pesoEntradaActual = data.peso_entrada;
+            
+            document.getElementById('sensor-peso-entrada-status').className = 
+                'status-indicator ' + (data.sensor_peso_entrada_activo ? 'active' : 'inactive');
+            document.getElementById('sensor-peso-salida-status').className = 
+                'status-indicator ' + (data.sensor_peso_salida_activo ? 'active' : 'inactive');
+            
+            document.getElementById('servo-estado').textContent = data.servo_activo ? 'Activo' : 'Inactivo';
+            document.getElementById('servo-direccion').textContent = `Dirección: ${data.direccion_servo}`;
+            
+            let diferencia = data.peso_entrada - data.peso_salida;
+            let porcentaje = (data.peso_salida / data.peso_entrada * 100) || 0;
+            document.getElementById('peso-diferencia').style.width = porcentaje + '%';
+            document.getElementById('peso-diferencia-texto').innerHTML = 
+                `Diferencia: ${Math.abs(diferencia).toFixed(1)} g (${porcentaje.toFixed(1)}%)`;
+            
+            document.getElementById('estado-molienda').innerHTML = 
+                data.motor_activo ? 'En proceso' : 'Detenido';
+            
+            if (moliendaActiva !== data.motor_activo) {
+                moliendaActiva = data.motor_activo;
+                let btn = document.getElementById('btnMolienda');
+                btn.textContent = moliendaActiva ? 'Detener Molienda' : 'Iniciar Molienda';
+                btn.className = moliendaActiva ? 'btn btn-danger' : 'buttonCONECTAR';
+            }
+
+            document.getElementById('crucesCero').textContent = data.cruces_cero;
+        }
+
+        function formatTime(seconds) {
+            return `${String(Math.floor(seconds)).padStart(2, '0')}:${String(Math.floor((seconds % 1) * 100)).padStart(2, '0')}`;
+        }
+
+        function updateTimer() {
+            if (tiempoRestante > 0) {
+                tiempoRestante -= 0.1;
+                document.getElementById('timerDisplay').textContent = formatTime(tiempoRestante);
+                
+                if (tiempoRestante <= 0) {
+                    clearInterval(timerInterval);
+                    tiempoRestante = 0;
+                    document.getElementById('timerDisplay').textContent = '00:00';
+                    toggleMolienda(); // Detener la molienda
+                }
+            }
+        }
+// Función para actualizar el estado del sistema
+function updateSystemStatus(data) {
+    const statusList = document.getElementById('systemStatus');
+    statusList.innerHTML = '';
+    
+    if (typeof data === 'object') {
+        Object.keys(data).forEach(key => {
+            const item = document.createElement('li');
+            // Use safe toString conversion
+            item.textContent = `${key}: ${String(data[key])}`;
+            statusList.appendChild(item);
+        });
+    }
+}
+    function addDebugMessage(message, type) {
+    const debugConsole = document.getElementById('debugConsole');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `debug-message debug-${type}`;
+    messageDiv.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+    debugConsole.appendChild(messageDiv);
+    
+    // Optional: Auto-scroll only if already near bottom
+    if (debugConsole.scrollHeight - debugConsole.scrollTop <= debugConsole.clientHeight + 50) {
+        debugConsole.scrollTop = debugConsole.scrollHeight;
+    }
+}
+function changeBackgroundColor(color) {
+    document.body.style.backgroundColor = color;
+}
+        function clearDebug() {
+    const debugConsole = document.getElementById('debugConsole');
+    debugConsole.innerHTML = '';
+    addDebugMessage('Consola limpiada', 'sent');
+}
+
+        function getNivelMoliendaSeleccionado() {
+            const radios = document.getElementsByName('grindLevel');
+            for (const radio of radios) {
+                if (radio.checked) {
+                    return radio.value;
+                }
+            }
+            return 'fino'; // valor por defecto
+        }
+
+        function toggleMolienda() {
+    // Use the checkbox state to determine molienda status
+    const checkbox = document.getElementById('checkbox');
+    moliendaActiva = checkbox.checked;
+    
+    const nivelMolienda = getNivelMoliendaSeleccionado();
+    const potenciaMotor = document.getElementById('motorPower').value;
+    
+    let comando = {
+        action: 'molienda',
+        estado: moliendaActiva,
+        nivel: nivelMolienda,
+        potencia: parseInt(potenciaMotor)
+    };
+    
+    socket.emit('comando', comando);
+    addDebugMessage(`Comando enviado: ${JSON.stringify(comando)}`, 'sent');
+    
+    if (moliendaActiva) {
+        tiempoRestante = TIEMPOS_MOLIENDA[nivelMolienda];
+        timerInterval = setInterval(updateTimer, 100);
+        changeBackgroundColor('rgb(255, 152, 152)');
+        
+        setTimeout(() => {
+            changeBackgroundColor('rgb(152, 255, 152)');
+            checkbox.checked = false; // Automatically uncheck after time expires
+        }, tiempoRestante * 1000);
+    } else {
+        clearInterval(timerInterval);
+        tiempoRestante = 0;
+        document.getElementById('timerDisplay').textContent = '00:00';
+        changeBackgroundColor('rgb(152, 255, 152)');
+    }
+}
+
+// Add event listener to the checkbox
+document.getElementById('checkbox').addEventListener('change', toggleMolienda);
+
+// Modify the socket 'datos' event handler to sync checkbox state
+socket.on('datos', function(data) {
+    console.log('Datos recibidos:', data);
+    actualizarInterfaz(data);
+    updateSystemStatus(data);
+    
+    // Sync checkbox state with motor status
+    const checkbox = document.getElementById('checkbox');
+    if (checkbox.checked !== data.motor_activo) {
+        checkbox.checked = data.motor_activo;
+    }
+});
+
+        // Event Listeners
+        document.getElementById('btnConnect').addEventListener('click', function() {
+            if (socket.connected) {
+                socket.disconnect();
+            } else {
+                socket.connect();
+            }
+        });
+
+        // Actualizar tiempo mostrado al cambiar nivel de molienda
+        document.querySelectorAll('input[name="grindLevel"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (!moliendaActiva) {
+                    tiempoRestante = TIEMPOS_MOLIENDA[this.value];
+                    document.getElementById('timerDisplay').textContent = formatTime(tiempoRestante);
+                }
+            });
+        });
+
+        // Manejar el botón de establecer peso a moler
+        document.getElementById('btnSetPesoAMoler').addEventListener('click', function() {
+    const pesoInput = document.getElementById('pesoAMoler');
+    const pesoAMoler = parseFloat(pesoInput.value);
+    const pesoAMolerStatus = document.getElementById('pesoAMolerStatus');
+
+    if (isNaN(pesoAMoler) || pesoAMoler <= 0) {
+        pesoAMolerStatus.textContent = 'Por favor, ingrese un peso válido mayor que 0.';
+        pesoAMolerStatus.style.color = 'red';
+        return;
+    }
+
+    if (pesoAMoler > pesoEntradaActual) {
+        pesoAMolerStatus.textContent = `El peso a moler (${pesoAMoler} g) no puede ser mayor que el peso de entrada (${pesoEntradaActual} g).`;
+        pesoAMolerStatus.style.color = 'red';
+        return;
+    }
+
+    let comando = {
+        action: 'setPesoAMoler',
+        peso: pesoAMoler
+    };
+    
+    socket.emit('comando', comando);
+    addDebugMessage(`Comando enviado: ${JSON.stringify(comando)}`, 'sent');
+    pesoAMolerStatus.textContent = `Peso a moler establecido: ${pesoAMoler} g`;
+    pesoAMolerStatus.style.color = 'green';
+});
+
+        // Control del servomotor
+        document.getElementById('servoSpeed').addEventListener('input', function() {
+            document.getElementById('servoSpeedValue').textContent = this.value;
+        });
+
+        document.getElementById('btnServoHorario').addEventListener('click', function() {
+            sendServoCommand('horario');
+        });
+
+        document.getElementById('btnServoAntihorario').addEventListener('click', function() {
+            sendServoCommand('antihorario');
+        });
+
+        document.getElementById('btnServoDetener').addEventListener('click', function() {
+            sendServoCommand('detener');
+        });
+
+        function sendServoCommand(direction) {
+            const speed = parseInt(document.getElementById('servoSpeed').value);
+            let comando = {
+                action: 'servo',
+                direction: direction,
+                speed: speed
+            };
+            socket.emit('comando', comando);
+            addDebugMessage(`Comando enviado: ${JSON.stringify(comando)}`, 'sent');
+        }
+
+        // Control del motor AC
+        document.getElementById('motorPower').addEventListener('input', function() {
+            document.getElementById('motorPowerValue').textContent = this.value + '%';
+            if (!moliendaActiva) {
+                let comando = {
+                    action: 'setMotorPower',
+                    power: parseInt(this.value)
+                };
+                socket.emit('comando', comando);
+                addDebugMessage(`Comando enviado: ${JSON.stringify(comando)}`, 'sent');
+            }
+        });
+
+        // Función para actualizar la fecha y hora
+        function actualizarFechaHora() {
+            const ahora = new Date();
+            const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            document.getElementById('fechaHoraActual').textContent = ahora.toLocaleDateString('es-ES', opciones);
+        }
+
+        // Actualizar fecha y hora cada segundo
+        setInterval(actualizarFechaHora, 1000);
+
+        // Llamar inmediatamente para mostrar la fecha y hora al cargar la página
+        actualizarFechaHora();
+
+        // Event listener para el botón "Activar Dispensador"
+        document.getElementById('btnActivarDispensador').addEventListener('click', function() {
+            let comando = {
+                action: 'activarDispensador'
+            };
+            socket.emit('comando', comando);
+            addDebugMessage(`Comando enviado: ${JSON.stringify(comando)}`, 'sent');
+        });
+        
+        // Iniciar la conexión al cargar la página
+        socket.connect();
+    </script>
+         <script src="js/users.js"></script>
+         <script src="js/auth.js"></script>
+         <script src="js/main.js"></script>
+    
 </body>
 </html>
+
