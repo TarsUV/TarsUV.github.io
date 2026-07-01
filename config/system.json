@@ -1,0 +1,14 @@
+{
+  "system": {
+
+    "message":
+"CarGuardian operativo",
+
+    "telemetry": true,
+
+    "commands": true,
+
+    "dashboard": true
+
+  }
+}
