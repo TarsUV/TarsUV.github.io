@@ -1,0 +1,38 @@
+{
+  "project": "CarGuardian Analytics",
+
+  "server": {
+
+    "url": "",
+
+    "protocol": "https",
+
+    "backend_port": 4000,
+
+    "updated_at": ""
+
+  },
+
+  "discovery": {
+
+    "refresh_hours": 24,
+
+    "retry_minutes": 10
+
+  },
+
+  "status": {
+
+    "maintenance": false,
+
+    "enabled": true
+
+  },
+
+  "update": {
+
+    "check": true
+
+  }
+
+}
