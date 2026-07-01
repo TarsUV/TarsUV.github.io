@@ -1,0 +1,16 @@
+{
+  "telemetry": {
+
+    "gps_seconds": 60,
+
+    "sensors_seconds": 600
+
+  },
+
+  "commands": {
+
+    "poll_seconds": 2
+
+  }
+
+}
