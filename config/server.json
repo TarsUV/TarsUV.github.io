@@ -1,10 +1,10 @@
 {
   "project": "CarGuardian Analytics",
   "server": {
-    "url": "https://40be-2803-e5e0-3a02-2d01-902-fec4-6fce-7237.ngrok-free.app",
+    "url": "https://1eaf-2803-e5e0-3a02-2d01-902-fec4-6fce-7237.ngrok-free.app",
     "protocol": "https",
     "backend_port": 4000,
-    "updated_at": "2026-07-06T15:50:51.372Z"
+    "updated_at": "2026-07-06T15:52:07.593Z"
   },
   "discovery": {
     "refresh_hours": 24,
