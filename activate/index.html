@@ -85,26 +85,28 @@
         const response = await fetch("/config/server.json?" + Date.now());
 
         if (!response.ok) {
-            throw new Error("No fue posible leer server.json");
+            throw new Error("No fue posible leer server.json.");
         }
 
-        const server = await response.json();
+        const config = await response.json();
 
         //-------------------------------------------------
-        // URL pública
+        // URL pública del servidor
         //-------------------------------------------------
-        const backend = server.server.url;
+        const backend = config.server.url;
+        console.log("Servidor:", backend);
 
-        if (!backend) {
-            throw new Error("No existe la URL del servidor.");
-        }
+        const destination =
+            backend +
+            "/activate.html?device=" +
+            encodeURIComponent(device);
+
+        console.log("Destino:", destination);
 
         //-------------------------------------------------
         // Redireccionar
         //-------------------------------------------------
-        window.location.replace(
-            backend + "/activate.html?device=" + encodeURIComponent(device)
-        );
+        window.location.replace(destination);
 
     } catch (error) {
         console.error(error);
