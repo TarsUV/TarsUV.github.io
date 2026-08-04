@@ -14,11 +14,7 @@
     <link rel="apple-touch-icon" href="logo_carGuardian.png">
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: Arial, Helvetica, sans-serif;
@@ -53,11 +49,11 @@
         p {
             color: #cbd5e1;
             line-height: 26px;
-            margin-bottom: 10px;
+            margin-bottom: 18px;
         }
 
         .loader {
-            margin: 35px auto 10px;
+            margin: 30px auto 10px;
             width: 55px;
             height: 55px;
             border-radius: 50%;
@@ -69,6 +65,27 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 28px;
+            background: #06b6d4;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #0891b2;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -76,7 +93,8 @@
         <img src="logo_carGuardian.png" alt="CarGuardian" class="logo">
         <h1>CarGuardian</h1>
         <p id="status">Localizando servidor...</p>
-        <div class="loader"></div>
+        <div id="loader" class="loader"></div>
+        <button id="retryBtn" class="btn hidden" onclick="start()">Reintentar</button>
     </div>
 
     <script>
@@ -87,37 +105,64 @@
                 .catch(err => console.error("Error SW:", err));
         }
 
-        (async () => {
-            const status = document.getElementById("status");
+        const statusEl = document.getElementById("status");
+        const loaderEl = document.getElementById("loader");
+        const retryBtn = document.getElementById("retryBtn");
+
+        async function start() {
+            statusEl.innerHTML = "Localizando servidor...";
+            loaderEl.classList.remove("hidden");
+            retryBtn.classList.add("hidden");
 
             try {
-                // Leer server.json (con cache-busting)
-                const response = await fetch("/config/server.json?" + Date.now());
+                // 1. Leer server.json
+                const configRes = await fetch("/config/server.json?" + Date.now());
+                if (!configRes.ok) throw new Error("No se pudo leer server.json");
 
-                if (!response.ok) {
-                    throw new Error("No fue posible leer server.json");
-                }
+                const config = await configRes.json();
+                const backend = (config.server?.url || config.url || "").replace(/\/$/, "");
 
-                const config = await response.json();
-                const backend = config.server?.url || config.url;
-
-                if (!backend) {
-                    throw new Error("No se encontró la URL del servidor");
-                }
+                if (!backend) throw new Error("No se encontró la URL del servidor");
 
                 console.log("Servidor detectado:", backend);
 
-                // Redirigir al login del backend
-                const destination = backend.replace(/\/$/, "") + "/pages/login.html";
-                status.innerHTML = "Conectando...";
+                // 2. Comprobar que el backend esté vivo
+                statusEl.innerHTML = "Verificando conexión...";
 
+                const healthRes = await fetch(backend + "/health", {
+                    method: "GET",
+                    signal: AbortSignal.timeout(6000) // 6 segundos máximo
+                });
+
+                if (!healthRes.ok) throw new Error("El servidor no responde");
+
+                // 3. ¿Hay sesión?
+                const user = localStorage.getItem("user");
+                const vehicle = localStorage.getItem("vehicle");
+
+                let destination;
+
+                if (user && vehicle) {
+                    // Ya tiene sesión → Dashboard
+                    destination = backend + "/pages/dashboard.html";
+                } else {
+                    // No hay sesión → Login
+                    destination = backend + "/pages/login.html";
+                }
+
+                statusEl.innerHTML = "Conectando...";
                 window.location.replace(destination);
 
             } catch (error) {
                 console.error(error);
-                status.innerHTML = "No fue posible localizar el servidor.<br>Intenta más tarde.";
+                loaderEl.classList.add("hidden");
+                statusEl.innerHTML = "Servidor fuera de línea.<br>Intenta nuevamente en unos segundos.";
+                retryBtn.classList.remove("hidden");
             }
-        })();
+        }
+
+        // Iniciar automáticamente
+        start();
     </script>
 </body>
 </html>
