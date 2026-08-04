@@ -1,1 +1,26 @@
 
+{
+  "name": "CarGuardian Analytics",
+  "short_name": "CarGuardian",
+  "description": "Monitoreo y diagnóstico inteligente de tu vehículo",
+  "start_url": "/app/",
+  "scope": "/app/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "logo_carGuardian.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo_carGuardian.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
